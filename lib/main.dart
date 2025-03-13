@@ -73,18 +73,14 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (selectedIndex) {
       case 0:
         page = GeneratorPage();
-        break;
       case 1:
         page = FavoritesPage();
-        break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
 
-    // The container for the current page, with its background color
-    // and subtle switching animation.
     var mainArea = ColoredBox(
-      color: colorScheme.surfaceVariant,
+      color: colorScheme.surfaceContainerHighest,
       child: AnimatedSwitcher(
         duration: Duration(milliseconds: 200),
         child: page,
@@ -95,8 +91,6 @@ class _MyHomePageState extends State<MyHomePage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 450) {
-            // Use a more mobile-friendly layout with BottomNavigationBar
-            // on narrow screens.
             return Column(
               children: [
                 Expanded(child: mainArea),
@@ -248,9 +242,10 @@ class BigCard extends StatelessWidget {
 }
 
 class FavoritesPage extends StatelessWidget {
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
     var appState = context.watch<MyAppState>();
 
     if (appState.favorites.isEmpty) {
@@ -267,34 +262,49 @@ class FavoritesPage extends StatelessWidget {
           child: Text('You have ${appState.favorites.length} favorites:'),
         ),
         Expanded(
-          child: GridView(
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 400,
-              childAspectRatio: 400 / 80,
-            ),
-            children: [
-              for (var pair in appState.favorites)
-                ListTile(
-                  leading: IconButton(
-                    icon: Icon(Icons.delete_outline, semanticLabel: 'Delete'),
-                    color: theme.colorScheme.primary,
-                    onPressed: () {
-                      _showDeleteDialog(context, appState, pair);
-                    },
-                  ),
-                  title: Text(
-                    pair.asLowerCase,
-                    semanticsLabel: pair.asPascalCase,
-                  ),
-                ),
-            ],
+          child: AnimatedList(
+            key: _listKey,
+            initialItemCount: appState.favorites.length,
+            itemBuilder: (context, index, animation) {
+              var pair = appState.favorites[index];
+              return _buildAnimatedListItem(
+                context,
+                appState,
+                pair,
+                index,
+                animation,
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  void _showDeleteDialog(BuildContext context, MyAppState appState, var pair) {
+  Widget _buildAnimatedListItem(BuildContext context, MyAppState appState,
+      var pair, int index, Animation<double> animation) {
+    var theme = Theme.of(context);
+
+    return SizeTransition(
+      sizeFactor: animation,
+      child: ListTile(
+        leading: IconButton(
+          icon: Icon(Icons.delete_outline, semanticLabel: 'Delete'),
+          color: theme.colorScheme.primary,
+          onPressed: () {
+            _showDeleteDialog(context, appState, pair, index);
+          },
+        ),
+        title: Text(
+          pair.asLowerCase,
+          semanticsLabel: pair.asPascalCase,
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, MyAppState appState, var pair,
+      int index) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -311,15 +321,35 @@ class FavoritesPage extends StatelessWidget {
             TextButton(
               child: Text('Delete'),
               onPressed: () {
-                appState.removeFavorite(pair);
+                _deleteItem(context, appState, pair, index);
                 Navigator.of(context).pop();
-                _showDeleteNotification(context, pair.asLowerCase);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  void _deleteItem(BuildContext context, MyAppState appState, var pair,
+      int index) {
+    var removedItem = appState.favorites[index];
+    appState.removeFavorite(pair);
+
+    // Remove the item from the AnimatedList with animation.
+    _listKey.currentState!.removeItem(
+      index,
+          (context, animation) => _buildAnimatedListItem(
+        context,
+        appState,
+        pair,
+        index,
+        animation,
+      ),
+    );
+
+    // Show a notification.
+    _showDeleteNotification(context, removedItem.asLowerCase);
   }
 
   void _showDeleteNotification(BuildContext context, String word) {
