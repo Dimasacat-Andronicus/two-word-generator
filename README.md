@@ -1,16 +1,14 @@
-# test_app
+<div align="center">
 
-testing app
+<h1>Flutter Application</h1>
 
-## Getting Started
+### Explore the website on:
+[![Netlify](https://img.shields.io/badge/Netlify-Visit-brightgreen?style=for-the-badge&logo=netlify)](https://dimasacatwebsite.netlify.app/)
+</div>
 
-This project is a starting point for a Flutter application.
+---
+<h3Two word combine Generator</h3>
+<p>Apply seamless UI animation.</p>
+<p>Uses English Words package and Provider package.</p>
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
